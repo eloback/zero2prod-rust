@@ -7,7 +7,7 @@ use zero2prod::{configuration::get_configuration, startup::run};
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     // Configure Tracer to "log" our events
-    let subscriber = get_subscriber("zero2prod".into(), "info".into());
+    let subscriber = get_subscriber("zero2prod".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
     // Instanciate a connection pool with the configs of the server.
