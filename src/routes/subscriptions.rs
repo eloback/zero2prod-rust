@@ -17,11 +17,13 @@ pub struct FormData {
         subscriber_name = %form.name
     )
 )]
+
 pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
-    match insert_subscriber(&form, &pool).await {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::InternalServerError().finish(),
-    }
+    insert_subscriber(&form, &pool)
+        .await
+        .map_or(HttpResponse::InternalServerError().finish(), |_| {
+            HttpResponse::Ok().finish()
+        })
 }
 
 #[tracing::instrument(
