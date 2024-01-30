@@ -8,7 +8,7 @@ pub struct EmailClient {
     base_url: reqwest::Url,
     sender: SubscriberEmail,
     authorization_token: Secret<String>,
-    timeout: std::time::Duration,
+    // timeout: std::time::Duration,
 }
 
 impl EmailClient {
@@ -24,7 +24,7 @@ impl EmailClient {
             base_url: reqwest::Url::parse(base_url.as_str()).expect("should be a valid Uri"),
             sender,
             authorization_token,
-            timeout,
+            // timeout,
         }
     }
 
@@ -42,12 +42,11 @@ impl EmailClient {
         let request_body = SendEmailRequestBody {
             from: self.sender.as_ref(),
             to: recipient.as_ref(),
-            subject: subject,
+            subject,
             html_body: html_content,
             text_body: text_content,
         };
-        let builder = self
-            .http_client
+        self.http_client
             .post(url)
             .header(
                 "X-Postmark-Server-Token",
@@ -57,7 +56,6 @@ impl EmailClient {
             .send()
             .await?
             .error_for_status()?;
-
         Ok(())
     }
 }
