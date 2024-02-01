@@ -87,11 +87,7 @@ async fn confirmation_fails_if_there_is_a_fatal_database_error() {
         .await
         .unwrap();
 
-    let response = reqwest::get(confirmation_links.html)
-        .await
-        .unwrap()
-        .error_for_status()
-        .unwrap();
+    let response = reqwest::get(confirmation_links.html).await.unwrap();
 
     assert_eq!(response.status().as_u16(), 500);
 }
