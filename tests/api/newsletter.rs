@@ -6,7 +6,7 @@ use wiremock::{
 use crate::helpers::{spawn_app, ConfirmationLinks, TestApp};
 
 #[tokio::test]
-async fn newsletters_are_not_deliverd_to_unconfirmed_subscribers() {
+async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
     let app = spawn_app().await;
     create_unconfirmed_subscriber(&app).await;
 
@@ -30,7 +30,7 @@ async fn newsletters_are_not_deliverd_to_unconfirmed_subscribers() {
 }
 
 #[tokio::test]
-async fn newsletters_are_deliverd_to_confirmed_subscribers() {
+async fn newsletters_are_delivered_to_confirmed_subscribers() {
     let app = spawn_app().await;
     create_confirmed_subscriber(&app).await;
 
@@ -120,6 +120,31 @@ async fn newsletters_return_400_for_invalid_data() {
             error_message
         );
     }
+}
+
+#[tokio::test]
+async fn requests_missing_authorization_are_rejected() {
+    let app = spawn_app().await;
+
+    let newsletter_request_body = serde_json::json!({
+        "title": "Newletter title",
+        "content": {
+            "text": "Newletter body as plain text",
+            "html": "<p>Newletter body as HTML</p>",
+        }
+    });
+
+    let response = reqwest::Client::new()
+        .post(format!("{}/newsletters", app.address))
+        .json(&newsletter_request_body)
+        .send()
+        .await
+        .expect("Should be able to post request");
+    assert_eq!(401, response.status().as_u16());
+    assert_eq!(
+        r#"Basic realm="publish""#,
+        response.headers()["WWW-Authenticate"]
+    );
 }
 
 async fn create_confirmed_subscriber(app: &TestApp) {

@@ -15,7 +15,7 @@ actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "rt"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
-config = "0.13"
+config = "0.14"
 uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4.22", default-features = false, features = ["clock"] }
 tracing = { version = "0.1", features = ["log"] }
@@ -31,6 +31,8 @@ reqwest = { version = "0.11.23", features = ["json"] }
 rand = { version = "0.8", features = ["std_rng"] }
 thiserror = "1"
 anyhow = "1"
+base64 = "0.21"
+argon2 = { version = "0.5", features = ["std"] }
 
 [dependencies.sqlx]
 version = "0.7"
