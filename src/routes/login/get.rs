@@ -1,7 +1,6 @@
 use actix_web::{http::header::ContentType, web, HttpResponse};
 use hmac::{Hmac, Mac};
 use secrecy::ExposeSecret;
-use sha2::Sha256;
 
 use crate::startup::HmacSecret;
 
