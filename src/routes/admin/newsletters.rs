@@ -3,7 +3,7 @@ use actix_web::{
         header::{self, HeaderMap, HeaderValue},
         StatusCode,
     },
-    web, HttpRequest, HttpResponse, ResponseError,
+    web, HttpResponse, ResponseError,
 };
 use anyhow::Context;
 use base64::Engine;
@@ -11,11 +11,13 @@ use secrecy::Secret;
 use sqlx::PgPool;
 
 use crate::{
-    authentication::{validate_credentials, AuthError, Credentials},
+    authentication::{Credentials, UserId},
     domain::SubscriberEmail,
     email_client::EmailClient,
     utils::error_chain_fmt,
 };
+
+use super::dashboard::get_username;
 
 #[derive(serde::Deserialize)]
 pub struct BodyData {
@@ -64,24 +66,20 @@ impl ResponseError for PublishError {
 
 #[tracing::instrument(
     name = "Publish a newsletter issue",
-    skip(body, pool, email_client, request),
-    fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
+    skip(body, pool, email_client),
+    fields(username=tracing::field::Empty)
 )]
 pub async fn publish_newsletter(
     body: web::Json<BodyData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
-    request: HttpRequest,
+    user_id: web::ReqData<UserId>,
 ) -> Result<HttpResponse, PublishError> {
-    let credentials = basic_authentication(request.headers()).map_err(PublishError::AuthError)?;
-    tracing::Span::current().record("username", &tracing::field::display(&credentials.username));
-    let user_id = validate_credentials(credentials, &pool)
+    let user_id = user_id.into_inner();
+    let username = get_username(*user_id, &pool)
         .await
-        .map_err(|e| match e {
-            AuthError::InvalidCredentials(_) => PublishError::AuthError(e.into()),
-            AuthError::UnexpectedError(_) => PublishError::UnexpectedError(e.into()),
-        })?;
-    tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
+        .map_err(PublishError::AuthError)?;
+    tracing::Span::current().record("username", &tracing::field::display(&username));
     let subscribers = get_confirmed_subscribers(&pool).await?;
     for subscriber in subscribers {
         match subscriber {
@@ -136,6 +134,7 @@ async fn get_confirmed_subscribers(
     Ok(confirmed_subscribers)
 }
 
+#[allow(dead_code)]
 fn basic_authentication(headers: &HeaderMap) -> Result<Credentials, anyhow::Error> {
     let header_value = headers
         .get("Authorization")
